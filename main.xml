@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!-- ***********************************************************************************
+                   (C) Copyright 2019 by Safran Aircraft Engines
+                            All rights reserved
+************************************************************************************ -->
+
+<Module specificationVersion="2.0">
+
+<ModulePrefs title="ERM Image Resizer" icon="resources/resize_icon.png" height="280" scrolling="true">
+    <Require feature="com.ibm.rdm.rm.api"/>
+	<Require feature="dynamic-height"/>
+</ModulePrefs>
+
+<Content type="html" href="./main.html"/>
+
+</Module>

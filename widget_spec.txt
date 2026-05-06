@@ -1,0 +1,49 @@
+Je dois développer le widget "ERM_ImageResizer" dont la fonction est de redimensionner une image incluse dans le corps d'un artefact de l'application ERM (Engineering Requirements Management, édité par IBM).
+
+Le projet "ERM_ImageResizer" contient le code provenant d'un autre widget, que nous alons réutiliser en très grande partie.
+
+L'interface graphique du widget doit être complétée de la manière suivante :
+
+- l'interface graphique doit rester en langue anglaise, comme ce qui existe actuellement
+- il faut ajouter un champ de saisie de la taille de l'image; il s'agira de la largeur de l'image en pixels.
+- ce champ ne doit accepter que des caractères numériques [0 à 9] de type entier
+- la taille minimale acceptable sera = 20. Si une taille inférieure à 20 est saisie, alors 20 sera proposée par défaut et un message d'information sera affichée dans la zone dédiée à aux messages (objet = gui_errormsg)
+- la taille maximale acceptable sera = 1000. Si une taille supérieure à 1000 est saisie, alors 1000 sera proposée par défaut et un message d'information sera affichée dans la zone dédiée à aux messages (objet = gui_errormsg)
+- les valeurs de taille minimale et maximale seront portées par des constantes, car susceptibles d'être modifiées durant la mise au point du widget
+- le label du bouton "Remove Format" sera remplacé par "Resize Image"
+
+Le corps d'un artefact ERM est un bloc HTML :
+
+- seuls les artefacts au format "Text" sont concernés par ce widget
+- ce bloc HTML contient le texte riche d'une exigence
+- si une exigence inclus une ou plusieurs images le bloc HTML contiendra des références sous les formes :
+
+++ Forme 1 = <img alt="Embedded Image" id="_1778079980440" src="https://elm703.raoulnet/rm/wrappedResources/WR_HUL2sEldEfGFhZc2-sAl9g?accept=none&private"/>, si aucun modificateur de taille n'est spécifié
+++ Forme 2 = <img alt="Embedded Image" height="225" id="_1778079980440" src="https://elm703.raoulnet/rm/wrappedResources/WR_HUL2sEldEfGFhZc2-sAl9g?accept=none&private" width="180" />, si un modificateur de taille est spécifié
+
+- la propriété 'alt="Embedded Image"' signifie qu'il s'agit d'une image incluse !
+- la propriété 'id' peut être variable
+- la propriété 'src' peut être variable et dépend de l'adresse de l'image embarquée
+- les proriétés "height" et "width" sont variables et représentent la taille de l'image, sachant que la proportionnalité de l'image doit être conservée
+
+Tu vas pouvoir t'inspirer des fonctions "clean_primaryText" et "content_removeFormat", qui proviennent d'un autre widget dont la fonction était différente et portait sur la modification du corps de l'artefact.
+Ces fonctions vont être d'une grande utilité, et ce sont celles-ci que tu va devoir modifier pour implémenter la logique de redimensionnement de l'image !
+
+La logique de redimensionnement est la suivante :
+
+- récupérer les caractèristiques de la liste d'artefacts sélectionnés, et principalement les caractèristiques IDENTIFIER, FORMAT et PRIMARY_TEXT
+- si le format de l'artefact n'est pas "Text" (constante RM.Data.Formats.TEXT), alors on ne change rien
+- si FORMAT est "Text" (constante RM.Data.Formats.TEXT) alors vérifier la présence d'une ou plusieurs images incluses dans le corps de l'artefact
+- si aucune image n'est détectée, alors on ne change rien
+- si une ou plusieurs images sont incluses dans le corps de l'artefact, 2 cas de figure sont possibles :
+
+++ si la référence est de le "Forme 1", alors ajouter "width=" avec la taille de l'image saisie dans le champ l'interface du widget.
+++ si la référence est de le "Forme 2", alors modifier "width=" avec la taille de l'image saisie dans le champ l'interface du widget et supprimer "height=", car la taille d'origine de l'image n'est pas connue, donc le calcul de proportionnalité n'est pas possible !
+
+Quelques règles de codage :
+
+- Le projet "ERM_ImageResizer" illustre parfaitement mes règles de codage; tu t'en inspirera pour réaliser les modifications,
+- Je te propose de renommer "content_removeFormat" en "content_resizeImage"
+
+De quelles informations complémentaires as-tu besoin pour réaliser ces modifications ?
+

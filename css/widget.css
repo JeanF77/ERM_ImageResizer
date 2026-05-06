@@ -1,0 +1,53 @@
+/* Styles structurels ultra-compacts */
+.x-small {
+  font-size: 0.72rem;
+  line-height: 1;
+}
+.gui-version-text {
+  font-size: 0.6rem;
+  color: #999;
+}
+
+.gui-widget-container {
+  max-width: 300px; 
+  padding: 5px !important;
+  background-color: #fcfcfc;
+}
+
+/* Ajustement du switch pour la compacité */
+.form-check-input {
+  width: 2em !important;
+  height: 1em !important;
+  margin-top: 0.15em !important;
+  cursor: pointer;
+}
+
+.role-icon {
+  font-size: 0.9rem; /* Légèrement réduit pour gagner de la place */
+  color: #555;
+  cursor: help;
+  display: flex;
+  justify-content: center;
+}
+
+.form-control-xs {
+  height: 22px; /* Réduit de 24px à 22px pour compenser le nombre de champs ITS */
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  border-radius: 3px;
+}
+
+.btn-xs {
+  padding: 0.2rem;
+  font-size: 0.75rem;
+  border-radius: 3px;
+}
+
+.text-truncate-module {
+  display: inline-block;
+  max-width: 130px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}

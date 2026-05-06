@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta http-equiv="Cache-Control" content="no-cache" />
+	<meta http-equiv="Pragma" content="no-cache" />
+
+	<!-- Styles -->
+
+	<link rel="stylesheet" href="../ELM_sharedLib/bootstrap-icons/1.13.1/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../ELM_sharedLib/bootstrap/5.3.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/widget.css">
+
+	<!-- Frameworks -->
+	<script src="js/jquery/jquery-3.7.1.min.js"></script>
+
+	<!-- Internal Tools -->
+	<script src="js/AGS_utils.js"></script>
+	<script src="js/AGS_guiUtils.js"></script>
+	
+	<script src="js/AGS_main.js"></script>
+	<script src="js/AGS_view.js"></script>
+
+	<link rel="icon" type="image/png" href="resources/resize_icon.png">
+
+	<title>ERM Image Resizer</title>
+
+	<!-- Template -->
+
+</head>
+
+<body>
+<div class="container-fluid gui-widget-container border rounded shadow-sm">
+        
+        <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-1">
+            <span class="fw-bold x-small text-truncate-module">
+                <i class="bi bi-layers-half me-1"></i><span id="gui_modulename">Nom du Module</span>
+            </span>
+            <span class="gui-version-text">v2026a</span>
+        </div>
+
+        <div class="row g-1 mb-2">
+            <div class="col-6">
+                <div class="border rounded p-1 text-center bg-white">
+                    <div class="x-small text-muted">To Analyze</div>
+                    <div id="gui_nbrartanalyze" class="fw-bold text-primary">0</div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="border rounded p-1 text-center bg-white">
+                    <div class="x-small text-muted">Modified</div>
+                    <div id="gui_nbrartmodified" class="fw-bold text-success">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-light rounded p-2 mb-2 border">
+            <div class="d-flex justify-content-between x-small mb-1">
+                <span class="text-muted">First :</span>
+                <span id="gui_firstartifact" class="fw-semibold">-</span>
+            </div>
+            <div class="d-flex justify-content-between x-small">
+                <span class="text-muted">Last :</span>
+                <span id="gui_lastartifact" class="fw-semibold">-</span>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <label for="gui_imagewidth" class="form-label x-small text-muted mb-1">Image Width (px)</label>
+            <input type="number" id="gui_imagewidth" class="form-control form-control-sm" step="1" placeholder="Width in pixels" value="200">
+        </div>
+
+        <div class="action-area">
+            <button id="gui_updateBtn" type="button" class="btn btn-primary btn-xs w-100 shadow-sm">
+                <i class="bi bi-aspect-ratio me-1"></i>Resize Image
+            </button>
+        </div>
+
+        <div class="status-area mt-2 d-flex justify-content-center align-items-center" style="min-height: 24px;">
+            <div id="gui_UpdateIndicatorLoading" class="spinner-border spinner-border-sm text-primary" role="status" style="display: none;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            
+            <div id="gui_UpdateIndicatorSuccess" style="display: none;">
+                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+            </div>
+            
+            <div id="gui_UpdateIndicatorFailed" style="display: none;">
+                <i class="bi bi-exclama-triangle-fill text-danger fs-5"></i>
+            </div>
+
+            <p id="gui_errormsg" class="x-small text-danger mb-0 ms-2" style="display: none;"></p>
+        </div>
+    </div>
+</body>
+
+</html>
