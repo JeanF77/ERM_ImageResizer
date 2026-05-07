@@ -362,7 +362,9 @@ function set_Attributes (artifactList, updateIndex) {
 
             gui_MgtProgressIndicator (GUI_ITEM_UPDATE_ROOT, IS_ERROR);
 
-            $("#" + GUI_ITEM_MSGERROR).text("Failed to set attribute values !");
+            $("#" + GUI_ITEM_MSGERROR).text("Failed to set attribute values !").show();
+
+            gui_mgtButtonDrop (GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_ON);
          }
       });
    } else { // ---- End of batch update

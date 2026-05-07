@@ -46,4 +46,3 @@ Quelques règles de codage :
 - Je te propose de renommer "content_removeFormat" en "content_resizeImage"
 
 De quelles informations complémentaires as-tu besoin pour réaliser ces modifications ?
-
