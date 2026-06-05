@@ -417,27 +417,29 @@ function content_resizeImage (artifactRef, imageWidth) {
  * @returns - Updated HTML string, else "null"
  */
 
-function resizeEmbeddedImages (htmlString, imageWidth) {
-   if (!htmlString || typeof htmlString !== 'string') {
-      return null;
-   }
+function resizeEmbeddedImages(htmlString, imageWidth) {
+  if (!htmlString || typeof htmlString !== 'string') {
+    return null;
+  }
 
-   const parser = new DOMParser();
-   const doc = parser.parseFromString(htmlString, 'text/html');
-   const body = doc.body;
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, 'text/html');
+  const body = doc.body;
 
-   const embeddedImages = body.querySelectorAll('img[alt="Embedded Image"]');
+  // ---- On récupère toutes les images ayant un alt, puis on filtre en JS
+  const embeddedImages = Array.from(body.querySelectorAll('img[alt]'))
+    .filter(img => typeof img.alt === 'string' && img.alt.toLowerCase() === 'embedded image');
 
-   if (embeddedImages.length === 0) {
-      return null;
-   }
+  if (embeddedImages.length === 0) {
+    return null;
+  }
 
-   embeddedImages.forEach(img => {
-      img.setAttribute('width', imageWidth);
-      img.removeAttribute('height');
-   });
+  embeddedImages.forEach(img => {
+    img.setAttribute('width', imageWidth);
+    img.removeAttribute('height');
+  });
 
-   return body.innerHTML;
+  return body.innerHTML;
 }
 
 /* --------------------------------------------------------------------------- */
