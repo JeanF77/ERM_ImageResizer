@@ -13,7 +13,7 @@
 */
 
 /* ------------------------------------------------------------------------------
-	---- Constantes
+   ---- Constantes
    --------------------------------------------------------------------------- */
 
 // ---- Pour GUI :
@@ -26,52 +26,52 @@
 
 // ---- Status
 
-const GUI_STATUS_LOADING                     = "Loading";
-const GUI_STATUS_SUCESS                      = "Success";
-const GUI_STATUS_FAILED                      = "Failed";
-const GUI_STATUS_WARNING                     = "Warning";
-const GUI_STATUS_ERROR                       = "Error";
+const GUI_STATUS_LOADING = "Loading";
+const GUI_STATUS_SUCESS = "Success";
+const GUI_STATUS_FAILED = "Failed";
+const GUI_STATUS_WARNING = "Warning";
+const GUI_STATUS_ERROR = "Error";
 
 // ---- GUI Objects and Objects Root
 
-const GUI_ITEM_UPDATE_BTN_ROOT               = "gui_update";
+const GUI_ITEM_UPDATE_BTN_ROOT = "gui_update";
 
-const GUI_ITEM_UPDATE_ROOT                   = "gui_UpdateIndicator";
-const GUI_ITEM_MODULE_NAME                   = "gui_modulename";
-const GUI_ITEM_NBARTANALYSE                  = "gui_nbrartanalyze";
-const GUI_ITEM_NBARTMODIFIED                 = "gui_nbrartmodified";
-const GUI_ITEM_MSGERROR                      = "gui_errormsg";
-const GUI_ITEM_FIRSTARTIFACTSEL              = "gui_firstartifact";
-const GUI_ITEM_LASTARTIFACTSEL               = "gui_lastartifact";
+const GUI_ITEM_UPDATE_ROOT = "gui_UpdateIndicator";
+const GUI_ITEM_MODULE_NAME = "gui_modulename";
+const GUI_ITEM_NBARTANALYSE = "gui_nbrartanalyze";
+const GUI_ITEM_NBARTMODIFIED = "gui_nbrartmodified";
+const GUI_ITEM_MSGERROR = "gui_errormsg";
+const GUI_ITEM_FIRSTARTIFACTSEL = "gui_firstartifact";
+const GUI_ITEM_LASTARTIFACTSEL = "gui_lastartifact";
 
 // ---- Icons
 
-const GUI_ICON_SUCCESS                       = "./resources/icon_success.png";
-const GUI_ICON_FAILED                        = "./resources/icon_failed.png";
-const GUI_ICON_WARNING                       = "./resources/icon_warning.png";
-const GUI_ICON_LOADING                       = "./resources/loading.gif";
+const GUI_ICON_SUCCESS = "./resources/icon_success.png";
+const GUI_ICON_FAILED = "./resources/icon_failed.png";
+const GUI_ICON_WARNING = "./resources/icon_warning.png";
+const GUI_ICON_LOADING = "./resources/loading.gif";
 
 /* --------------------------------------------------------------------------- */
 
-const UPD_CHECK                              = "mode_check";
-const UPD_MODIFY                             = "mode_modify";
+const UPD_CHECK = "mode_check";
+const UPD_MODIFY = "mode_modify";
 
-const ELM_ATTR_TYPE                          = "Artifact Type";
+const ELM_ATTR_TYPE = "Artifact Type";
 
-const MAX_ARTIFACT                           = 200;
+const MAX_ARTIFACT = 200;
 
-const LOG_OPER_STRCOPY                       = "log_str_copy";
-const LOG_OPER_INT2STR                       = "log_int_to_str";
-const LOG_OPER_ENUMCOPYREPL                  = "log_enum_copyrepl";
-const LOG_OPER_ENUMREPL                      = "log_enum_repl";
+const LOG_OPER_STRCOPY = "log_str_copy";
+const LOG_OPER_INT2STR = "log_int_to_str";
+const LOG_OPER_ENUMCOPYREPL = "log_enum_copyrepl";
+const LOG_OPER_ENUMREPL = "log_enum_repl";
 
-const GUI_ITEM_IMAGE_WIDTH                   = "gui_imagewidth";
+const GUI_ITEM_IMAGE_WIDTH = "gui_imagewidth";
 
-const MIN_IMAGE_SIZE                         = 20;
-const MAX_IMAGE_SIZE                         = 1000;
+const MIN_IMAGE_SIZE = 20;
+const MAX_IMAGE_SIZE = 1000;
 
 /* ------------------------------------------------------------------------------
-	---- Classes
+   ---- Classes
    --------------------------------------------------------------------------- */
 
 /* ------------------------------------------------------------------------------
@@ -81,22 +81,22 @@ const MAX_IMAGE_SIZE                         = 1000;
 var g_ModuleRef;                                // ---- Module Reference Object
 
 var g_Artifact = {
-   'moduleId'     : null,                       // ---- Module ID
-   'moduleName'   : null,                       // ---- Module Name
-   'custattrlist' : [],                         // ---- List of custom attributes to modify
-   'artList'      : []                          // ---- List of selected artifacts
+   'moduleId': null,                       // ---- Module ID
+   'moduleName': null,                       // ---- Module Name
+   'custattrlist': [],                         // ---- List of custom attributes to modify
+   'artList': []                          // ---- List of selected artifacts
 }
 
 var g_LogReport = {                             // ---- Structure to store widget excecution report
-   'nbScannedArtifacts' : 0,
-   'nbUpdatedArtifacts' : 0,
-   'firstArtifactSel'   : "",
-   'lastArtifactSel'    : "",
-   'modifLog'           : []
+   'nbScannedArtifacts': 0,
+   'nbUpdatedArtifacts': 0,
+   'firstArtifactSel': "",
+   'lastArtifactSel': "",
+   'modifLog': []
 }
 
 /* ------------------------------------------------------------------------------
-	---- Core Fonctions
+   ---- Core Fonctions
    --------------------------------------------------------------------------- */
 
 /**
@@ -104,31 +104,31 @@ var g_LogReport = {                             // ---- Structure to store widge
  * @param {Object} artifactRef - Reference to artifact
  */
 
-function rm_artifactOpen (artifactRef) {
+function rm_artifactOpen(artifactRef) {
    let myAttrList = [];
 
-   mgt_Console (rm_artifactOpen.name + ' : Open artifact', CONSOLE_INFO);
+   mgt_Console(rm_artifactOpen.name + ' : Open artifact', CONSOLE_INFO);
 
    // ---- Turn Off GUI buttons
 
-   gui_mgtButtonDrop (GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
+   gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
 
-   gui_MgtProgressIndicator (GUI_ITEM_UPDATE_ROOT, ACTION_DISP_OFF);
+   gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, ACTION_DISP_OFF);
 
    // ---- Stack the attributes to fetch
 
-   myAttrList.push (RM.Data.Attributes.IDENTIFIER);
-   myAttrList.push (RM.Data.Attributes.NAME);
-   myAttrList.push (RM.Data.Attributes.FORMAT);
+   myAttrList.push(RM.Data.Attributes.IDENTIFIER);
+   myAttrList.push(RM.Data.Attributes.NAME);
+   myAttrList.push(RM.Data.Attributes.FORMAT);
 
    // ---- Get artifact attributes
 
-   RM.Data.getAttributes (artifactRef, myAttrList, function (result) {
+   RM.Data.getAttributes(artifactRef, myAttrList, function (result) {
       let myArtifactID;
       let myArtifactName;
 
       if (result.code === RM.OperationResult.OPERATION_OK) {
-         mgt_Console (rm_artifactOpen.name + " : Get module details", CONSOLE_INFO);
+         mgt_Console(rm_artifactOpen.name + " : Get module details", CONSOLE_INFO);
 
          myArtifactID = result.data[0].values[RM.Data.Attributes.IDENTIFIER];
          myArtifactName = result.data[0].values[RM.Data.Attributes.NAME];
@@ -136,25 +136,25 @@ function rm_artifactOpen (artifactRef) {
          if (result.data[0].values[RM.Data.Attributes.FORMAT] === "Module") {
             // ---- Open artifact is a module
 
-            mgt_Console (rm_artifactOpen.name + ' : Artifact is a module', CONSOLE_INFO);
+            mgt_Console(rm_artifactOpen.name + ' : Artifact is a module', CONSOLE_INFO);
 
             $("#" + GUI_ITEM_MSGERROR).hide();
             $("#" + GUI_ITEM_MODULE_NAME).text(myArtifactID + ":" + myArtifactName);
 
-            g_Artifact.moduleId   = myArtifactID;
+            g_Artifact.moduleId = myArtifactID;
             g_Artifact.moduleName = myArtifactName;
          } else {
             // ---- Open artifact is not a module
 
-            mgt_Console (rm_artifactOpen.name + ' : Artifact is not a module !', CONSOLE_WARNING);
+            mgt_Console(rm_artifactOpen.name + ' : Artifact is not a module !', CONSOLE_WARNING);
 
             $("#" + GUI_ITEM_MODULE_NAME).text("*** Not a Module ! ***");
 
-            g_Artifact.moduleId   = null;
+            g_Artifact.moduleId = null;
             g_Artifact.moduleName = null;
          }
       } else {
-         mgt_Console (rm_artifactOpen.name + " : Can not get module details !", CONSOLE_ERROR);
+         mgt_Console(rm_artifactOpen.name + " : Can not get module details !", CONSOLE_ERROR);
 
          $("#" + GUI_ITEM_MODULE_NAME).text("*** Get Module Error ***");
       }
@@ -165,9 +165,9 @@ function rm_artifactOpen (artifactRef) {
  * Callback on "Close Artifact" event
  */
 
-function rm_artifactClose () {
+function rm_artifactClose() {
 
-   mgt_Console (rm_artifactClose.name + ' : Close artifact', CONSOLE_INFO);
+   mgt_Console(rm_artifactClose.name + ' : Close artifact', CONSOLE_INFO);
 
    g_Artifact.moduleId = null;
 
@@ -175,12 +175,12 @@ function rm_artifactClose () {
 
    // ---- Turn Off GUI buttons
 
-   gui_mgtButtonDrop (GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
+   gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
 
-   gui_MgtProgressIndicator (GUI_ITEM_UPDATE_ROOT, ACTION_DISP_OFF);
+   gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, ACTION_DISP_OFF);
 
    // ---- Empty all
-   
+
    $("#" + GUI_ITEM_NBARTANALYSE).empty();
    $("#" + GUI_ITEM_NBARTMODIFIED).empty();
    $("#" + GUI_ITEM_FIRSTARTIFACTSEL).empty();
@@ -193,14 +193,14 @@ function rm_artifactClose () {
  * Callback on "Select Artifact" event
  */
 
-function rm_artifactSelect (artifactRef) {
-   mgt_Console (rm_artifactSelect.name + ' : Select artifact ' + artifactRef.length + ' artifacts', CONSOLE_INFO);
+function rm_artifactSelect(artifactRef) {
+   mgt_Console(rm_artifactSelect.name + ' : Select artifact ' + artifactRef.length + ' artifacts', CONSOLE_INFO);
 
-   g_Artifact.artList.splice (0);
+   g_Artifact.artList.splice(0);
 
    $("#" + GUI_ITEM_MSGERROR).hide();
 
-   gui_mgtButtonDrop (GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
+   gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
 
    // ---- Test number of selected artifacts
 
@@ -214,12 +214,12 @@ function rm_artifactSelect (artifactRef) {
 
       $("#" + GUI_ITEM_MSGERROR).text("Max artifacts is " + MAX_ARTIFACT + " !");
       $("#" + GUI_ITEM_MSGERROR).show();
-   } else if (artifactRef.length > 0)  {
+   } else if (artifactRef.length > 0) {
       // ---- Number of selected artifacts is good !
 
       g_Artifact.artList = artifactRef;
 
-      gui_mgtButtonDrop (GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_ON);
+      gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_ON);
    }
 }
 
@@ -229,42 +229,42 @@ function rm_artifactSelect (artifactRef) {
  * @param {Number} imageWidth - Target image width in pixels
  */
 
-function resize_primaryText (artifactList, imageWidth) {
+function resize_primaryText(artifactList, imageWidth) {
    let myAttrList = [];
 
    // ---- Empty log
 
-   g_LogReport.modifLog.splice (0);
+   g_LogReport.modifLog.splice(0);
    g_LogReport.nbScannedArtifacts = 0;
    g_LogReport.nbUpdatedArtifacts = 0;
-   g_LogReport.firstArtifactSel   = null;
-   g_LogReport.lastArtifactSel    = null;
+   g_LogReport.firstArtifactSel = null;
+   g_LogReport.lastArtifactSel = null;
 
    $("#" + GUI_ITEM_NBARTANALYSE).text(g_LogReport.nbScannedArtifacts);
    $("#" + GUI_ITEM_NBARTMODIFIED).text(g_LogReport.nbUpdatedArtifacts);
 
-   gui_MgtProgressIndicator (GUI_ITEM_UPDATE_ROOT, IS_INPROGRESS);
+   gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, IS_INPROGRESS);
 
-   mgt_Console (resize_primaryText.name + ' : Ready to scan ' + artifactList.length + ' artifacts', CONSOLE_INFO);
+   mgt_Console(resize_primaryText.name + ' : Ready to scan ' + artifactList.length + ' artifacts', CONSOLE_INFO);
 
    // ---- Stack all attributes to fetch
 
-   g_Artifact.custattrlist.splice (0);
+   g_Artifact.custattrlist.splice(0);
 
-   myAttrList.push (RM.Data.Attributes.IDENTIFIER);
-   myAttrList.push (RM.Data.Attributes.FORMAT);
-   myAttrList.push (RM.Data.Attributes.PRIMARY_TEXT);
+   myAttrList.push(RM.Data.Attributes.IDENTIFIER);
+   myAttrList.push(RM.Data.Attributes.FORMAT);
+   myAttrList.push(RM.Data.Attributes.PRIMARY_TEXT);
 
    // ---- Get Artifact Attributes
 
-   RM.Data.getAttributes (artifactList, myAttrList, function (result) {
+   RM.Data.getAttributes(artifactList, myAttrList, function (result) {
       let myArtifact;
       let toSave = [];
 
       if (result.code === RM.OperationResult.OPERATION_OK) {
          // ---- Loop on attributes
 
-         result.data.forEach (function (artifactRef) {
+         result.data.forEach(function (artifactRef) {
             // ---- Store first and last selected artifact (select stack is inverted !)
 
             if (g_LogReport.lastArtifactSel === null) {
@@ -277,12 +277,12 @@ function resize_primaryText (artifactList, imageWidth) {
 
             $("#" + GUI_ITEM_NBARTANALYSE).text(g_LogReport.nbScannedArtifacts);
 
-            myArtifact = content_resizeImage (artifactRef, imageWidth);
+            myArtifact = content_resizeImage(artifactRef, imageWidth);
 
             if (myArtifact !== null) {
-               toSave.push (myArtifact);
+               toSave.push(myArtifact);
 
-               mgt_Console (resize_primaryText.name + " : Resize image in artifact '" + artifactRef.values[RM.Data.Attributes.IDENTIFIER] + "'", CONSOLE_INFO);
+               mgt_Console(resize_primaryText.name + " : Resize image in artifact '" + artifactRef.values[RM.Data.Attributes.IDENTIFIER] + "'", CONSOLE_INFO);
             }
          });
 
@@ -292,20 +292,20 @@ function resize_primaryText (artifactList, imageWidth) {
          // ---- Save modified artifacts
 
          if (toSave.length > 0) {
-            mgt_Console (resize_primaryText.name + " : Ready to save modified artifacts ...", CONSOLE_INFO);
+            mgt_Console(resize_primaryText.name + " : Ready to save modified artifacts ...", CONSOLE_INFO);
 
-            set_Attributes (toSave);
+            set_Attributes(toSave);
          } else { // ---- Nothing to update !
 
             $("#" + GUI_ITEM_NBARTANALYSE).text(g_LogReport.nbScannedArtifacts);
             $("#" + GUI_ITEM_NBARTMODIFIED).text(g_LogReport.nbUpdatedArtifacts);
 
-            gui_MgtProgressIndicator (GUI_ITEM_UPDATE_ROOT, IS_SUCCESS);
-            mgt_Console (resize_primaryText.name + ': Nothing to modify', CONSOLE_INFO);
+            gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, IS_SUCCESS);
+            mgt_Console(resize_primaryText.name + ': Nothing to modify', CONSOLE_INFO);
          }
       } else {
-         gui_MgtProgressIndicator (GUI_ITEM_UPDATE_ROOT, IS_ERROR);
-         mgt_Console (resize_primaryText.name + ': Failed to get artifact attributes !', CONSOLE_ERROR);
+         gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, IS_ERROR);
+         mgt_Console(resize_primaryText.name + ': Failed to get artifact attributes !', CONSOLE_ERROR);
       }
    });
 }
@@ -316,7 +316,7 @@ function resize_primaryText (artifactList, imageWidth) {
  * @param {BigInteger} updateIndex - Update Index [Optional]
  */
 
-function set_Attributes (artifactList, updateIndex) {
+function set_Attributes(artifactList, updateIndex) {
    const MAX_ARTIFACT_UPDATE = 3;
 
    let myArtifactUpdList = [...artifactList];
@@ -325,8 +325,8 @@ function set_Attributes (artifactList, updateIndex) {
 
    // ---- Disable buttons
 
-   gui_mgtButtonDrop (GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
-   
+   gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
+
    // ---- Start batch update
 
    if (myArtifactUpdList.length > myUpdIndex) {
@@ -336,12 +336,12 @@ function set_Attributes (artifactList, updateIndex) {
 
       myUpdIndex += MAX_ARTIFACT_UPDATE;
 
-      RM.Data.setAttributes (myArtifactUpdListCopy, function (result) { // ---- Call RM API to update attributes
+      RM.Data.setAttributes(myArtifactUpdListCopy, function (result) { // ---- Call RM API to update attributes
          $("#" + GUI_ITEM_NBARTANALYSE).text(g_LogReport.nbScannedArtifacts);
 
          // ---- Set update status for each modified artifact
 
-         result.data.forEach (function (myArtifact) {
+         result.data.forEach(function (myArtifact) {
             if (myArtifact.code === RM.OperationResult.OPERATION_OK) {
                g_LogReport.nbUpdatedArtifacts++;
 
@@ -352,29 +352,29 @@ function set_Attributes (artifactList, updateIndex) {
          // ---- Manage batch update action and status
 
          if (result.code === RM.OperationResult.OPERATION_OK) { // ---- All artifacts in batch are correctly saved
-            mgt_Console (set_Attributes.name + " : Successful update for block at index " + myUpdIndex, CONSOLE_INFO);
+            mgt_Console(set_Attributes.name + " : Successful update for block at index " + myUpdIndex, CONSOLE_INFO);
 
             // ---- Compute the next block with a direct recursive call
 
-            set_Attributes (artifactList, myUpdIndex);
+            set_Attributes(artifactList, myUpdIndex);
          } else { // ---- Not all artifacts are correctly saved
-            mgt_Console (set_Attributes.name + " : Failed update for block at index " + myUpdIndex, CONSOLE_ERROR);
+            mgt_Console(set_Attributes.name + " : Failed update for block at index " + myUpdIndex, CONSOLE_ERROR);
 
-            gui_MgtProgressIndicator (GUI_ITEM_UPDATE_ROOT, IS_ERROR);
+            gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, IS_ERROR);
 
             $("#" + GUI_ITEM_MSGERROR).text("Failed to set attribute values !").show();
 
-            gui_mgtButtonDrop (GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_ON);
+            gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_ON);
          }
       });
    } else { // ---- End of batch update
       mgt_Console(set_Attributes.name + ' : batch update is finished !', CONSOLE_INFO);
 
-      gui_MgtProgressIndicator (GUI_ITEM_UPDATE_ROOT, IS_SUCCESS);
+      gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, IS_SUCCESS);
 
       // ---- Enable buttons
 
-      gui_mgtButtonDrop (GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_ON);
+      gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_ON);
    }
 }
 
@@ -385,7 +385,7 @@ function set_Attributes (artifactList, updateIndex) {
  * @return - Modified artifact, else "null"
  */
 
-function content_resizeImage (artifactRef, imageWidth) {
+function content_resizeImage(artifactRef, imageWidth) {
    let myNewPrimaryText;
    let myPrimaryText = artifactRef.values[RM.Data.Attributes.PRIMARY_TEXT];
 
@@ -395,7 +395,7 @@ function content_resizeImage (artifactRef, imageWidth) {
       return null;
    }
 
-   myNewPrimaryText = resizeEmbeddedImages (myPrimaryText, imageWidth);
+   myNewPrimaryText = resizeEmbeddedImages(myPrimaryText, imageWidth);
 
    // ---- Return resized artifact
 
@@ -418,28 +418,37 @@ function content_resizeImage (artifactRef, imageWidth) {
  */
 
 function resizeEmbeddedImages(htmlString, imageWidth) {
-  if (!htmlString || typeof htmlString !== 'string') {
-    return null;
-  }
+   if (!htmlString || typeof htmlString !== 'string') {
+      return null;
+   }
 
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(htmlString, 'text/html');
-  const body = doc.body;
+   const parser = new DOMParser();
+   const doc = parser.parseFromString(htmlString, 'text/html');
+   const body = doc.body;
 
-  // ---- On récupère toutes les images ayant un alt, puis on filtre en JS
-  const embeddedImages = Array.from(body.querySelectorAll('img[alt]'))
-    .filter(img => typeof img.alt === 'string' && img.alt.toLowerCase() === 'embedded image');
+   // ---- Si un objet "embedded resource decorator" est présent, on ne touche à rien
+   const hasEmbeddedDecorator = Array.from(body.querySelectorAll('*')).some(el =>
+      Array.from(el.classList).some(cls => cls.toLowerCase() === 'com-ibm-rdm-editor-embeddedresourcedecorator')
+   );
 
-  if (embeddedImages.length === 0) {
-    return null;
-  }
+   // ---- On récupère toutes les images ayant un alt, puis on filtre en JS
+   const embeddedImages = Array.from(body.querySelectorAll('img[alt]'))
+      .filter(img => typeof img.alt === 'string' && img.alt.toLowerCase() === 'embedded image');
 
-  embeddedImages.forEach(img => {
-    img.setAttribute('width', imageWidth);
-    img.removeAttribute('height');
-  });
+   if (hasEmbeddedDecorator || embeddedImages.length === 0) {
+      if (hasEmbeddedDecorator) {
+         mgt_Console(resizeEmbeddedImages.name + ' : Embedded Resource Decorator found, skipping image resizing.', CONSOLE_WARNING);
+      }
+      
+      return null;
+   } else {
+      embeddedImages.forEach(img => {
+         img.setAttribute('width', imageWidth);
+         img.removeAttribute('height');
+      });
 
-  return body.innerHTML;
+      return body.innerHTML;
+   }
 }
 
 /* --------------------------------------------------------------------------- */
@@ -448,10 +457,10 @@ function resizeEmbeddedImages(htmlString, imageWidth) {
  * Callback on "Update" button event
  */
 
-function btnupdate_artifact () {
+function btnupdate_artifact() {
    let myImageWidth = parseInt($("#" + GUI_ITEM_IMAGE_WIDTH).val(), 10);
 
-   mgt_Console (btnupdate_artifact.name + ' : Update Data Model - Resize Image Mode', CONSOLE_INFO);
+   mgt_Console(btnupdate_artifact.name + ' : Update Data Model - Resize Image Mode', CONSOLE_INFO);
 
    $("#" + GUI_ITEM_MSGERROR).hide();
 
@@ -469,7 +478,7 @@ function btnupdate_artifact () {
       $("#" + GUI_ITEM_MSGERROR).show();
    }
 
-   resize_primaryText (g_Artifact.artList, myImageWidth);
+   resize_primaryText(g_Artifact.artList, myImageWidth);
 }
 
 /**
@@ -477,27 +486,27 @@ function btnupdate_artifact () {
  */
 
 function gui_eventHandler() {
-    $('#' + GUI_ITEM_UPDATE_BTN_ROOT + GUI_TARGET_BTN).on('click', btnupdate_artifact);
+   $('#' + GUI_ITEM_UPDATE_BTN_ROOT + GUI_TARGET_BTN).on('click', btnupdate_artifact);
 }
 
 /* --------------------------------------------------------------------------- */
 
 /** Initialisation de l'IHM du widget */
 
-function view_init () {
+function view_init() {
 
    // ---- GUI Init
 
    gui_eventHandler();
 
-   gui_mgtButtonDrop (GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
+   gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
 
    $("#" + GUI_ITEM_MODULE_NAME).text("*** Select a Module ! ***");
 
    // ---- RM : subscribe to event client 
 
-   RM.Event.subscribe (RM.Event.ARTIFACT_OPENED, rm_artifactOpen);
-   RM.Event.subscribe (RM.Event.ARTIFACT_CLOSED, rm_artifactClose);
-   RM.Event.subscribe (RM.Event.ARTIFACT_SELECTED, rm_artifactSelect);
+   RM.Event.subscribe(RM.Event.ARTIFACT_OPENED, rm_artifactOpen);
+   RM.Event.subscribe(RM.Event.ARTIFACT_CLOSED, rm_artifactClose);
+   RM.Event.subscribe(RM.Event.ARTIFACT_SELECTED, rm_artifactSelect);
 }
 
