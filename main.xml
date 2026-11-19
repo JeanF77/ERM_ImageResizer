@@ -7,7 +7,7 @@
 
 <Module specificationVersion="2.0">
 
-<ModulePrefs title="ERM Image Resizer" icon="resources/resize_icon.png" height="280" scrolling="true">
+<ModulePrefs title="ERM Image Resizer" icon="resources/resize_icon.png" height="310" scrolling="true">
     <Require feature="com.ibm.rdm.rm.api"/>
 	<Require feature="dynamic-height"/>
 </ModulePrefs>

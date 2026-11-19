@@ -71,6 +71,15 @@ const GUI_ITEM_IMAGE_WIDTH = "gui_imagewidth";
 const MIN_IMAGE_SIZE = 20;
 const MAX_IMAGE_SIZE = 1000;
 
+// ---- Configuration context
+
+const CONFIG_UNKNOWN = "config_unknown";        // ---- Not read yet
+const CONFIG_EDITABLE = "config_editable";      // ---- Change set or stream : artifacts can be modified
+const CONFIG_BASELINE = "config_baseline";      // ---- Baseline : artifacts can not be modified
+const CONFIG_ERROR = "config_error";            // ---- Not readable, or not supported
+
+const OSLC_CONFIG_CONTEXT_PARAM = "oslc_config.context";
+
 /* ------------------------------------------------------------------------------
    ---- Classes
    --------------------------------------------------------------------------- */
@@ -86,6 +95,12 @@ var g_Artifact = {
    'moduleName': null,                       // ---- Module Name
    'custattrlist': [],                         // ---- List of custom attributes to modify
    'artList': []                          // ---- List of selected artifacts
+}
+
+var g_ConfigContext = {                         // ---- Configuration context of the open module
+   'status': CONFIG_UNKNOWN,                    // ---- CONFIG_UNKNOWN, CONFIG_EDITABLE, CONFIG_BASELINE, CONFIG_ERROR
+   'contextUri': null,                          // ---- Value of "oslc_config.context" (change set, else stream), "null" if none
+   'errorMsg': null                             // ---- Message displayed when artifacts can not be modified
 }
 
 var g_LogReport = {                             // ---- Structure to store widget excecution report
@@ -116,6 +131,12 @@ function rm_artifactOpen(artifactRef) {
 
    gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, ACTION_DISP_OFF);
 
+   // ---- Previous selection and configuration context are no longer valid
+
+   g_Artifact.artList = [];
+
+   config_setContext(CONFIG_UNKNOWN, null, null);
+
    // ---- Stack the attributes to fetch
 
    myAttrList.push(RM.Data.Attributes.IDENTIFIER);
@@ -144,6 +165,10 @@ function rm_artifactOpen(artifactRef) {
 
             g_Artifact.moduleId = myArtifactID;
             g_Artifact.moduleName = myArtifactName;
+
+            // ---- Get the configuration context (change set, stream or baseline)
+
+            config_getCurrentContext();
          } else {
             // ---- Open artifact is not a module
 
@@ -171,12 +196,15 @@ function rm_artifactClose() {
    mgt_Console(rm_artifactClose.name + ' : Close artifact', CONSOLE_INFO);
 
    g_Artifact.moduleId = null;
+   g_Artifact.artList = [];
 
    $("#" + GUI_ITEM_MODULE_NAME).text("*** Select a Module ! ***");
 
    // ---- Turn Off GUI buttons
 
    gui_mgtActionButtons(ACTION_ACTIVE_OFF);
+
+   config_setContext(CONFIG_UNKNOWN, null, null);
 
    gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, ACTION_DISP_OFF);
 
@@ -210,6 +238,11 @@ function rm_artifactSelect(artifactRef) {
 
       $("#" + GUI_ITEM_MSGERROR).text("No module open !");
       $("#" + GUI_ITEM_MSGERROR).show();
+   } else if (g_ConfigContext.errorMsg !== null) {
+      // ---- Baseline or configuration error : artifacts can not be modified
+
+      $("#" + GUI_ITEM_MSGERROR).text(g_ConfigContext.errorMsg);
+      $("#" + GUI_ITEM_MSGERROR).show();
    } else if (artifactRef.length > MAX_ARTIFACT) {
       // ---- Do not select more than "MAX_ARTIFACT"
 
@@ -220,8 +253,86 @@ function rm_artifactSelect(artifactRef) {
 
       g_Artifact.artList = artifactRef;
 
+      // ---- If the configuration context is not read yet, buttons are enabled when it is (see config_setContext)
+
+      if (g_ConfigContext.status === CONFIG_EDITABLE) {
+         gui_mgtActionButtons(ACTION_ACTIVE_ON);
+      }
+   }
+}
+
+/**
+ * Get the current configuration context of ERM
+ * - The change set (if any) is used first, else the stream
+ * - Baseline : artifacts can not be modified, action buttons stay disabled
+ * - No configuration (project without configuration management) : no context is added to requests
+ */
+
+function config_getCurrentContext() {
+   RM.Client.getCurrentConfigurationContext(function (result) {
+      if (result.code === RM.OperationResult.OPERATION_OK) {
+         const COMPONENT_CONTEXT = result.data;
+         const LOCAL_CONFIG_URI = COMPONENT_CONTEXT.localConfigurationUri;
+
+         if (COMPONENT_CONTEXT.changeSetUri) { // ---- Change set first
+            config_setContext(CONFIG_EDITABLE, COMPONENT_CONTEXT.changeSetUri, null);
+         } else if (!LOCAL_CONFIG_URI) { // ---- No configuration management
+            config_setContext(CONFIG_EDITABLE, null, null);
+         } else if (LOCAL_CONFIG_URI.indexOf("/baseline/") > -1) { // ---- Baseline can not be modified !
+            config_setContext(CONFIG_BASELINE, null, "Baseline can not be modified !");
+         } else if (LOCAL_CONFIG_URI.indexOf("/stream/") > -1) { // ---- Stream
+            config_setContext(CONFIG_EDITABLE, LOCAL_CONFIG_URI, null);
+         } else { // ---- Other configuration type
+            config_setContext(CONFIG_ERROR, null, "Configuration is not a stream or a change set !");
+         }
+      } else { // ---- Other error
+         config_setContext(CONFIG_ERROR, null, "Can not get configuration context !");
+      }
+   });
+}
+
+/**
+ * Store the configuration context, and update action buttons and error message
+ * @param {String} status - Context status (CONFIG_UNKNOWN, CONFIG_EDITABLE, CONFIG_BASELINE, CONFIG_ERROR)
+ * @param {String} contextUri - Value of "oslc_config.context" (change set or stream URI), "null" if none
+ * @param {String} errorMsg - Message displayed when artifacts can not be modified, else "null"
+ */
+
+function config_setContext(status, contextUri, errorMsg) {
+   g_ConfigContext.status = status;
+   g_ConfigContext.contextUri = contextUri;
+   g_ConfigContext.errorMsg = errorMsg;
+
+   if (status === CONFIG_UNKNOWN) {
+      return;
+   }
+
+   mgt_Console(config_setContext.name + " : Configuration context = " + status + " (" + contextUri + ")", (errorMsg === null ? CONSOLE_INFO : CONSOLE_WARNING));
+
+   if (errorMsg !== null) { // ---- Artifacts can not be modified
+      gui_mgtActionButtons(ACTION_ACTIVE_OFF);
+
+      $("#" + GUI_ITEM_MSGERROR).text(errorMsg);
+      $("#" + GUI_ITEM_MSGERROR).show();
+   } else if (g_Artifact.artList.length > 0) { // ---- Artifacts selected before the context was read
       gui_mgtActionButtons(ACTION_ACTIVE_ON);
    }
+}
+
+/**
+ * Add the configuration context to a resource URL
+ * - "oslc_config.context" is mandatory to read a resource of a change set or a stream (else HTTP 410)
+ * @param {String} resourceUrl - Resource URL
+ * @param {String} contextUri - Configuration URI (change set or stream), "null" for none
+ * @returns - Resource URL completed with the configuration context
+ */
+
+function config_addContext(resourceUrl, contextUri) {
+   if (contextUri === null) {
+      return resourceUrl;
+   }
+
+   return resourceUrl + (resourceUrl.indexOf("?") > -1 ? "&" : "?") + OSLC_CONFIG_CONTEXT_PARAM + "=" + encodeURIComponent(contextUri);
 }
 
 /**
@@ -456,7 +567,8 @@ function getBlobImageSize(blob) {
 
 /**
  * Get the natural size of an image stored in ERM (wrappedResources URL)
- * - Downloads the resource, checks the "Content-Type" header, then decodes the body
+ * - Downloads the resource in the current configuration context, checks the
+ *   "Content-Type" header, then decodes the body
  * @param {String} imageUrl - Image URL (value of the "src" attribute)
  * @param {Map} sizeCache - Image natural size cache (key = image URL)
  * @returns - Promise resolved with {width, height}, else "null"
@@ -464,24 +576,27 @@ function getBlobImageSize(blob) {
 
 async function getImageSize(imageUrl, sizeCache) {
    let mySize = null;
+   let myRequestUrl = imageUrl;
 
    if (sizeCache.has(imageUrl)) {
       return sizeCache.get(imageUrl);
    }
 
    try {
-      const response = await fetch(imageUrl, { credentials: "include", cache: "no-store" });
+      myRequestUrl = config_addContext(imageUrl, g_ConfigContext.contextUri);
+
+      const response = await fetch(myRequestUrl, { credentials: "include", cache: "no-store" });
       const contentType = (response.headers.get("Content-Type") || "").toLowerCase();
 
       if (!response.ok) {
-         mgt_Console(getImageSize.name + " : HTTP " + response.status + " for '" + imageUrl + "'", CONSOLE_WARNING);
+         mgt_Console(getImageSize.name + " : HTTP " + response.status + " for '" + myRequestUrl + "'", CONSOLE_WARNING);
       } else if (!contentType.startsWith("image/")) {
-         mgt_Console(getImageSize.name + " : Not an image (Content-Type = '" + contentType + "') for '" + imageUrl + "'", CONSOLE_WARNING);
+         mgt_Console(getImageSize.name + " : Not an image (Content-Type = '" + contentType + "') for '" + myRequestUrl + "'", CONSOLE_WARNING);
       } else {
          mySize = await getBlobImageSize(await response.blob());
       }
    } catch (error) {
-      mgt_Console(getImageSize.name + " : Failed to read '" + imageUrl + "' : " + error, CONSOLE_WARNING);
+      mgt_Console(getImageSize.name + " : Failed to read '" + myRequestUrl + "' : " + error, CONSOLE_WARNING);
    }
 
    sizeCache.set(imageUrl, mySize);

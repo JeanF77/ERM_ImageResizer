@@ -6,16 +6,17 @@ In ERM, an image pasted into a requirement keeps its original size, or the size 
 
 | | |
 |---|---|
-| Version | v2026c |
+| Version | v2026d |
 | Target application | ERM (DOORS Next) with the RM Extensions API (`com.ibm.rdm.rm.api`) |
 | Browsers | Chrome, Edge |
 
 ## Features
 
 - **Module awareness** — the widget follows the artifact opened in ERM and displays the module identifier and name; it stays disabled when the opened artifact is not a module.
-- **Selection-based** — it processes the artifacts selected in the module (up to 200 at a time). The **Resize Image** and **Reset Image** buttons are enabled only when a module is open and the selection is valid, and are disabled while a run is in progress.
+- **Configuration context** — when a module is opened, the widget reads the current configuration with `RM.Client.getCurrentConfigurationContext`. The change set is used if there is one, otherwise the stream. In a **baseline**, which cannot be modified, the buttons stay disabled and the message "Baseline can not be modified !" is displayed. They also stay disabled, with a message, if the configuration cannot be read or is neither a stream nor a change set.
+- **Selection-based** — it processes the artifacts selected in the module (up to 200 at a time). The **Resize Image** and **Reset Image** buttons are enabled only when a module is open in a change set or a stream and the selection is valid, and are disabled while a run is in progress.
 - **Image width** — width in pixels entered in the widget (integer, default 200). A value below 20 or above 1000 is replaced by the nearest limit, with a message under the button.
-- **Proportional height** — for each image, the widget downloads the image resource, checks that its `Content-Type` is `image/*`, reads its natural size and sets `height = round(width × natural height / natural width)`. Each image is downloaded only once per run, even if it appears in several artifacts. If the size cannot be read (HTTP error, resource that is not an image), the `height` attribute is removed and the browser keeps the ratio when displaying it.
+- **Proportional height** — for each image, the widget downloads the image resource in the current configuration (the `src` URL completed with `oslc_config.context=<change set or stream>`, without which ERM answers HTTP 410), checks that its `Content-Type` is `image/*`, reads its natural size and sets `height = round(width × natural height / natural width)`. Each image is downloaded only once per run, even if it appears in several artifacts. If the size cannot be read (HTTP error, resource that is not an image), the `height` attribute is removed and the browser keeps the ratio when displaying it.
 - **Reset Image** — second button, under **Resize Image**: removes the `width` and `height` attributes of the embedded images, so that they are displayed again at their original size. Artifacts whose images have no size attribute are not modified, and the width field is ignored.
 - **Report** — number of artifacts analyzed and modified, first and last artifact of the selection, and a success / failure indicator. Details of each step are written to the browser console.
 
@@ -45,7 +46,7 @@ Modified artifacts are saved through the RM API in batches of 3. If a batch fail
 
 - [jQuery 3.7.1](https://jquery.com/) (MIT), bundled in `js/jquery/`
 - [Bootstrap 5.3.3](https://getbootstrap.com/) + [Bootstrap Icons 1.13.1](https://icons.getbootstrap.com/) (MIT), **not bundled**: loaded from the shared library `../ELM_sharedLib/` of the hosting server
-- [RM Extensions API](https://jazz.net/wiki/bin/view/Main/RMExtensions6061) (`RM.Data`, `RM.Event`), provided by ERM
+- [RM Extensions API](https://jazz.net/wiki/bin/view/Main/RMExtensions6061) (`RM.Data`, `RM.Event`, `RM.Client`), provided by ERM
 - Packaged as an [OpenSocial](https://opensocial.github.io/spec/2.5.1/Core-Gadget.xml.html) gadget (`main.xml`) for deployment inside an ERM dashboard
 
 ## Project structure
@@ -73,7 +74,7 @@ The widget reads each image with `fetch` and the user's session (`credentials: "
 
 ## Usage
 
-1. In ERM, open the module, in the configuration (stream or change set) where the changes must be made.
+1. In ERM, open the module, in the configuration (stream or change set) where the changes must be made. In a baseline, the widget is read-only.
 2. Select the artifacts whose images must be resized (up to 200).
 3. Enter the **Image Width** in pixels (not needed for **Reset Image**).
 4. Click **Resize Image**, and wait for the success indicator. To go back to the original size of the images, click **Reset Image** instead.
@@ -83,4 +84,4 @@ The widget reads each image with `fetch` and the user's session (`credentials: "
 
 - The width is the same for every image of the selection; there is no "only reduce larger images" mode.
 - Images inside an artifact that contains an embedded resource decorator are not resized.
-- The image URL is used as written in the Primary Text. If the server cannot resolve it outside the current configuration, the image size is not read and only the width is applied.
+- The configuration context is read when the module is opened. If the configuration is changed without reopening the module, reopen it before running the widget.
