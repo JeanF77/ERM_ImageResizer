@@ -35,6 +35,7 @@ const GUI_STATUS_ERROR = "Error";
 // ---- GUI Objects and Objects Root
 
 const GUI_ITEM_UPDATE_BTN_ROOT = "gui_update";
+const GUI_ITEM_RESET_BTN_ROOT = "gui_reset";
 
 const GUI_ITEM_UPDATE_ROOT = "gui_UpdateIndicator";
 const GUI_ITEM_MODULE_NAME = "gui_modulename";
@@ -111,7 +112,7 @@ function rm_artifactOpen(artifactRef) {
 
    // ---- Turn Off GUI buttons
 
-   gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
+   gui_mgtActionButtons(ACTION_ACTIVE_OFF);
 
    gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, ACTION_DISP_OFF);
 
@@ -175,7 +176,7 @@ function rm_artifactClose() {
 
    // ---- Turn Off GUI buttons
 
-   gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
+   gui_mgtActionButtons(ACTION_ACTIVE_OFF);
 
    gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, ACTION_DISP_OFF);
 
@@ -200,7 +201,7 @@ function rm_artifactSelect(artifactRef) {
 
    $("#" + GUI_ITEM_MSGERROR).hide();
 
-   gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
+   gui_mgtActionButtons(ACTION_ACTIVE_OFF);
 
    // ---- Test number of selected artifacts
 
@@ -219,18 +220,23 @@ function rm_artifactSelect(artifactRef) {
 
       g_Artifact.artList = artifactRef;
 
-      gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_ON);
+      gui_mgtActionButtons(ACTION_ACTIVE_ON);
    }
 }
 
 /**
- * Update Data Model - Resize embedded images in artifacts Primary Text
+ * Update Data Model - Resize (or reset) embedded images in artifacts Primary Text
  * @param {Array} artifactList - Selected artifacts list
- * @param {Number} imageWidth - Target image width in pixels
+ * @param {Number} imageWidth - Target image width in pixels, "null" to reset images to their original size
  */
 
 function resize_primaryText(artifactList, imageWidth) {
    let myAttrList = [];
+   let myActionLabel = (imageWidth === null ? "Reset" : "Resize");
+
+   // ---- Disable buttons while processing (image downloads may take time)
+
+   gui_mgtActionButtons(ACTION_ACTIVE_OFF);
 
    // ---- Empty log
 
@@ -283,13 +289,13 @@ function resize_primaryText(artifactList, imageWidth) {
             } catch (error) {
                myArtifact = null;
 
-               mgt_Console(resize_primaryText.name + " : Failed to resize image in artifact '" + artifactRef.values[RM.Data.Attributes.IDENTIFIER] + "' : " + error, CONSOLE_ERROR);
+               mgt_Console(resize_primaryText.name + " : Failed to " + myActionLabel.toLowerCase() + " image in artifact '" + artifactRef.values[RM.Data.Attributes.IDENTIFIER] + "' : " + error, CONSOLE_ERROR);
             }
 
             if (myArtifact !== null) {
                toSave.push(myArtifact);
 
-               mgt_Console(resize_primaryText.name + " : Resize image in artifact '" + artifactRef.values[RM.Data.Attributes.IDENTIFIER] + "'", CONSOLE_INFO);
+               mgt_Console(resize_primaryText.name + " : " + myActionLabel + " image in artifact '" + artifactRef.values[RM.Data.Attributes.IDENTIFIER] + "'", CONSOLE_INFO);
             }
          }
 
@@ -309,10 +315,14 @@ function resize_primaryText(artifactList, imageWidth) {
 
             gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, IS_SUCCESS);
             mgt_Console(resize_primaryText.name + ': Nothing to modify', CONSOLE_INFO);
+
+            gui_mgtActionButtons(ACTION_ACTIVE_ON);
          }
       } else {
          gui_MgtProgressIndicator(GUI_ITEM_UPDATE_ROOT, IS_ERROR);
          mgt_Console(resize_primaryText.name + ': Failed to get artifact attributes !', CONSOLE_ERROR);
+
+         gui_mgtActionButtons(ACTION_ACTIVE_ON);
       }
    });
 }
@@ -332,7 +342,7 @@ function set_Attributes(artifactList, updateIndex) {
 
    // ---- Disable buttons
 
-   gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
+   gui_mgtActionButtons(ACTION_ACTIVE_OFF);
 
    // ---- Start batch update
 
@@ -371,7 +381,7 @@ function set_Attributes(artifactList, updateIndex) {
 
             $("#" + GUI_ITEM_MSGERROR).text("Failed to set attribute values !").show();
 
-            gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_ON);
+            gui_mgtActionButtons(ACTION_ACTIVE_ON);
          }
       });
    } else { // ---- End of batch update
@@ -381,14 +391,14 @@ function set_Attributes(artifactList, updateIndex) {
 
       // ---- Enable buttons
 
-      gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_ON);
+      gui_mgtActionButtons(ACTION_ACTIVE_ON);
    }
 }
 
 /**
- * Resize embedded images in artifact Primary Text
+ * Resize (or reset) embedded images in artifact Primary Text
  * @param {Object} artifactRef - Artifact (reference + attributes)
- * @param {Number} imageWidth - Target image width in pixels
+ * @param {Number} imageWidth - Target image width in pixels, "null" to reset images to their original size
  * @param {Map} sizeCache - Image natural size cache (key = image URL)
  * @return - Promise resolved with modified artifact, else "null"
  */
@@ -480,12 +490,13 @@ async function getImageSize(imageUrl, sizeCache) {
 }
 
 /**
- * Resize embedded images in an HTML string
- * - width is set to the value entered in the widget
- * - height is computed from the image natural size to preserve proportionality
- * - if the natural size cannot be read, height is removed (browser keeps the ratio)
+ * Resize (or reset) embedded images in an HTML string
+ * - Resize : width is set to the value entered in the widget, and height is
+ *   computed from the image natural size to preserve proportionality
+ *   (if the natural size cannot be read, height is removed : browser keeps the ratio)
+ * - Reset (imageWidth = null) : width and height are removed, image is displayed at its original size
  * @param {String} htmlString - HTML string to process
- * @param {Number} imageWidth - Target image width in pixels
+ * @param {Number} imageWidth - Target image width in pixels, "null" to reset images to their original size
  * @param {Map} sizeCache - Image natural size cache (key = image URL)
  * @returns - Promise resolved with updated HTML string, else "null"
  */
@@ -514,6 +525,21 @@ async function resizeEmbeddedImages(htmlString, imageWidth, sizeCache) {
       }
       
       return null;
+   } else if (imageWidth === null) {
+      // ---- Reset : only images with a size modifier must be changed
+
+      const sizedImages = embeddedImages.filter(img => img.hasAttribute('width') || img.hasAttribute('height'));
+
+      if (sizedImages.length === 0) {
+         return null;
+      }
+
+      sizedImages.forEach(img => {
+         img.removeAttribute('width');
+         img.removeAttribute('height');
+      });
+
+      return body.innerHTML;
    } else {
       for (const img of embeddedImages) {
          const mySize = await getImageSize(img.getAttribute('src'), sizeCache);
@@ -563,11 +589,35 @@ function btnupdate_artifact() {
 }
 
 /**
- * Attach button handler
+ * Callback on "Reset" button event
+ * - Removes width and height of embedded images (original size)
+ */
+
+function btnreset_artifact() {
+   mgt_Console(btnreset_artifact.name + ' : Update Data Model - Reset Image Mode', CONSOLE_INFO);
+
+   $("#" + GUI_ITEM_MSGERROR).hide();
+
+   resize_primaryText(g_Artifact.artList, null);
+}
+
+/**
+ * Enable / disable all action buttons ("Resize Image" and "Reset Image")
+ * @param {String} action - Action (ACTION_ACTIVE_ON, ACTION_ACTIVE_OFF)
+ */
+
+function gui_mgtActionButtons(action) {
+   gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, action);
+   gui_mgtButtonDrop(GUI_ITEM_RESET_BTN_ROOT, action);
+}
+
+/**
+ * Attach button handlers
  */
 
 function gui_eventHandler() {
    $('#' + GUI_ITEM_UPDATE_BTN_ROOT + GUI_TARGET_BTN).on('click', btnupdate_artifact);
+   $('#' + GUI_ITEM_RESET_BTN_ROOT + GUI_TARGET_BTN).on('click', btnreset_artifact);
 }
 
 /* --------------------------------------------------------------------------- */
@@ -580,7 +630,7 @@ function view_init() {
 
    gui_eventHandler();
 
-   gui_mgtButtonDrop(GUI_ITEM_UPDATE_BTN_ROOT, ACTION_ACTIVE_OFF);
+   gui_mgtActionButtons(ACTION_ACTIVE_OFF);
 
    $("#" + GUI_ITEM_MODULE_NAME).text("*** Select a Module ! ***");
 

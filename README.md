@@ -13,9 +13,10 @@ In ERM, an image pasted into a requirement keeps its original size, or the size 
 ## Features
 
 - **Module awareness** — the widget follows the artifact opened in ERM and displays the module identifier and name; it stays disabled when the opened artifact is not a module.
-- **Selection-based** — it processes the artifacts selected in the module (up to 200 at a time). The **Resize Image** button is enabled only when a module is open and the selection is valid.
+- **Selection-based** — it processes the artifacts selected in the module (up to 200 at a time). The **Resize Image** and **Reset Image** buttons are enabled only when a module is open and the selection is valid, and are disabled while a run is in progress.
 - **Image width** — width in pixels entered in the widget (integer, default 200). A value below 20 or above 1000 is replaced by the nearest limit, with a message under the button.
 - **Proportional height** — for each image, the widget downloads the image resource, checks that its `Content-Type` is `image/*`, reads its natural size and sets `height = round(width × natural height / natural width)`. Each image is downloaded only once per run, even if it appears in several artifacts. If the size cannot be read (HTTP error, resource that is not an image), the `height` attribute is removed and the browser keeps the ratio when displaying it.
+- **Reset Image** — second button, under **Resize Image**: removes the `width` and `height` attributes of the embedded images, so that they are displayed again at their original size. Artifacts whose images have no size attribute are not modified, and the width field is ignored.
 - **Report** — number of artifacts analyzed and modified, first and last artifact of the selection, and a success / failure indicator. Details of each step are written to the browser console.
 
 ### What is modified
@@ -30,7 +31,7 @@ Only artifacts in **Text** format are processed. In their Primary Text, an image
 <img alt="Embedded Image" height="225" id="_1778079980440" src="https://<server>/rm/wrappedResources/WR_...?accept=none&private" width="180"/>
 ```
 
-In both cases, `width` and `height` are rewritten. All other content of the artifact is left unchanged.
+In both cases, **Resize Image** rewrites `width` and `height`, and **Reset Image** removes them. All other content of the artifact is left unchanged.
 
 An artifact is **skipped** when:
 
@@ -74,8 +75,8 @@ The widget reads each image with `fetch` and the user's session (`credentials: "
 
 1. In ERM, open the module, in the configuration (stream or change set) where the changes must be made.
 2. Select the artifacts whose images must be resized (up to 200).
-3. Enter the **Image Width** in pixels.
-4. Click **Resize Image**, and wait for the success indicator.
+3. Enter the **Image Width** in pixels (not needed for **Reset Image**).
+4. Click **Resize Image**, and wait for the success indicator. To go back to the original size of the images, click **Reset Image** instead.
 5. Check the result in the module. Every change is a normal artifact update, visible in the artifact history.
 
 ## Limitations
