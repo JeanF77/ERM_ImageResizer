@@ -257,14 +257,15 @@ function resize_primaryText(artifactList, imageWidth) {
 
    // ---- Get Artifact Attributes
 
-   RM.Data.getAttributes(artifactList, myAttrList, function (result) {
+   RM.Data.getAttributes(artifactList, myAttrList, async function (result) {
       let myArtifact;
       let toSave = [];
+      let mySizeCache = new Map();   // ---- Image natural size cache (key = image URL), shared by all artifacts
 
       if (result.code === RM.OperationResult.OPERATION_OK) {
-         // ---- Loop on attributes
+         // ---- Loop on attributes (sequential : one image download at a time)
 
-         result.data.forEach(function (artifactRef) {
+         for (const artifactRef of result.data) {
             // ---- Store first and last selected artifact (select stack is inverted !)
 
             if (g_LogReport.lastArtifactSel === null) {
@@ -277,14 +278,20 @@ function resize_primaryText(artifactList, imageWidth) {
 
             $("#" + GUI_ITEM_NBARTANALYSE).text(g_LogReport.nbScannedArtifacts);
 
-            myArtifact = content_resizeImage(artifactRef, imageWidth);
+            try {
+               myArtifact = await content_resizeImage(artifactRef, imageWidth, mySizeCache);
+            } catch (error) {
+               myArtifact = null;
+
+               mgt_Console(resize_primaryText.name + " : Failed to resize image in artifact '" + artifactRef.values[RM.Data.Attributes.IDENTIFIER] + "' : " + error, CONSOLE_ERROR);
+            }
 
             if (myArtifact !== null) {
                toSave.push(myArtifact);
 
                mgt_Console(resize_primaryText.name + " : Resize image in artifact '" + artifactRef.values[RM.Data.Attributes.IDENTIFIER] + "'", CONSOLE_INFO);
             }
-         });
+         }
 
          $("#" + GUI_ITEM_FIRSTARTIFACTSEL).text(g_LogReport.firstArtifactSel);
          $("#" + GUI_ITEM_LASTARTIFACTSEL).text(g_LogReport.lastArtifactSel);
@@ -382,10 +389,11 @@ function set_Attributes(artifactList, updateIndex) {
  * Resize embedded images in artifact Primary Text
  * @param {Object} artifactRef - Artifact (reference + attributes)
  * @param {Number} imageWidth - Target image width in pixels
- * @return - Modified artifact, else "null"
+ * @param {Map} sizeCache - Image natural size cache (key = image URL)
+ * @return - Promise resolved with modified artifact, else "null"
  */
 
-function content_resizeImage(artifactRef, imageWidth) {
+async function content_resizeImage(artifactRef, imageWidth, sizeCache) {
    let myNewPrimaryText;
    let myPrimaryText = artifactRef.values[RM.Data.Attributes.PRIMARY_TEXT];
 
@@ -395,7 +403,7 @@ function content_resizeImage(artifactRef, imageWidth) {
       return null;
    }
 
-   myNewPrimaryText = resizeEmbeddedImages(myPrimaryText, imageWidth);
+   myNewPrimaryText = await resizeEmbeddedImages(myPrimaryText, imageWidth, sizeCache);
 
    // ---- Return resized artifact
 
@@ -409,15 +417,80 @@ function content_resizeImage(artifactRef, imageWidth) {
 }
 
 /**
- * Resize embedded images in an HTML string
- * - Form 1 (no size): adds width attribute
- * - Form 2 (with size): replaces width and removes height to preserve proportionality
- * @param {String} htmlString - HTML string to process
- * @param {Number} imageWidth - Target image width in pixels
- * @returns - Updated HTML string, else "null"
+ * Read the natural size of an image stored in a Blob
+ * - The Blob is decoded by the browser through a temporary "object URL"
+ * @param {Blob} blob - Image content (response body)
+ * @returns - Promise resolved with {width, height}, else "null" if the Blob is not a decodable image
  */
 
-function resizeEmbeddedImages(htmlString, imageWidth) {
+function getBlobImageSize(blob) {
+   return new Promise(function (resolve) {
+      const objectUrl = URL.createObjectURL(blob);
+      const img = new Image();
+
+      img.onload = function () {
+         const mySize = { width: img.naturalWidth, height: img.naturalHeight };
+
+         URL.revokeObjectURL(objectUrl);
+         resolve(mySize.width > 0 && mySize.height > 0 ? mySize : null);
+      };
+
+      img.onerror = function () {
+         URL.revokeObjectURL(objectUrl);
+         resolve(null);
+      };
+
+      img.src = objectUrl;
+   });
+}
+
+/**
+ * Get the natural size of an image stored in ERM (wrappedResources URL)
+ * - Downloads the resource, checks the "Content-Type" header, then decodes the body
+ * @param {String} imageUrl - Image URL (value of the "src" attribute)
+ * @param {Map} sizeCache - Image natural size cache (key = image URL)
+ * @returns - Promise resolved with {width, height}, else "null"
+ */
+
+async function getImageSize(imageUrl, sizeCache) {
+   let mySize = null;
+
+   if (sizeCache.has(imageUrl)) {
+      return sizeCache.get(imageUrl);
+   }
+
+   try {
+      const response = await fetch(imageUrl, { credentials: "include", cache: "no-store" });
+      const contentType = (response.headers.get("Content-Type") || "").toLowerCase();
+
+      if (!response.ok) {
+         mgt_Console(getImageSize.name + " : HTTP " + response.status + " for '" + imageUrl + "'", CONSOLE_WARNING);
+      } else if (!contentType.startsWith("image/")) {
+         mgt_Console(getImageSize.name + " : Not an image (Content-Type = '" + contentType + "') for '" + imageUrl + "'", CONSOLE_WARNING);
+      } else {
+         mySize = await getBlobImageSize(await response.blob());
+      }
+   } catch (error) {
+      mgt_Console(getImageSize.name + " : Failed to read '" + imageUrl + "' : " + error, CONSOLE_WARNING);
+   }
+
+   sizeCache.set(imageUrl, mySize);
+
+   return mySize;
+}
+
+/**
+ * Resize embedded images in an HTML string
+ * - width is set to the value entered in the widget
+ * - height is computed from the image natural size to preserve proportionality
+ * - if the natural size cannot be read, height is removed (browser keeps the ratio)
+ * @param {String} htmlString - HTML string to process
+ * @param {Number} imageWidth - Target image width in pixels
+ * @param {Map} sizeCache - Image natural size cache (key = image URL)
+ * @returns - Promise resolved with updated HTML string, else "null"
+ */
+
+async function resizeEmbeddedImages(htmlString, imageWidth, sizeCache) {
    if (!htmlString || typeof htmlString !== 'string') {
       return null;
    }
@@ -442,10 +515,18 @@ function resizeEmbeddedImages(htmlString, imageWidth) {
       
       return null;
    } else {
-      embeddedImages.forEach(img => {
+      for (const img of embeddedImages) {
+         const mySize = await getImageSize(img.getAttribute('src'), sizeCache);
+
          img.setAttribute('width', imageWidth);
-         img.removeAttribute('height');
-      });
+
+         if (mySize !== null) {
+            // ---- Keep proportionality : height = width * (natural height / natural width)
+            img.setAttribute('height', Math.max(1, Math.round(imageWidth * mySize.height / mySize.width)));
+         } else {
+            img.removeAttribute('height');
+         }
+      }
 
       return body.innerHTML;
    }
