@@ -16,23 +16,26 @@ In ERM, an image pasted into a requirement keeps its original size, or the size 
 - **Configuration context** — when a module is opened, the widget reads the current configuration with `RM.Client.getCurrentConfigurationContext`. The change set is used if there is one, otherwise the stream. In a **baseline**, which cannot be modified, the buttons stay disabled and the message "Baseline can not be modified !" is displayed. They also stay disabled, with a message, if the configuration cannot be read or is neither a stream nor a change set.
 - **Selection-based** — it processes the artifacts selected in the module (up to 200 at a time). The **Resize Image** and **Reset Image** buttons are enabled only when a module is open in a change set or a stream and the selection is valid, and are disabled while a run is in progress.
 - **Image width** — width in pixels entered in the widget (integer, default 200). A value below 20 or above 1000 is replaced by the nearest limit, with a message under the button.
-- **Proportional height** — for each image, the widget downloads the image resource in the current configuration (the `src` URL completed with `oslc_config.context=<change set or stream>`, without which ERM answers HTTP 410), checks that its `Content-Type` is `image/*`, reads its natural size and sets `height = round(width × natural height / natural width)`. Each image is downloaded only once per run, even if it appears in several artifacts. If the size cannot be read (HTTP error, resource that is not an image), the `height` attribute is removed and the browser keeps the ratio when displaying it.
-- **Reset Image** — second button, under **Resize Image**: removes the `width` and `height` attributes of the embedded images, so that they are displayed again at their original size. Artifacts whose images have no size attribute are not modified, and the width field is ignored.
+- **Proportional height** — for each image, the widget downloads the image resource in the current configuration (the `src` URL completed with `oslc_config.context=<change set or stream>`, without which ERM answers HTTP 410), checks that its `Content-Type` is `image/*`, reads its natural size and sets `height = round(width × natural height / natural width)`. Each image is downloaded only once per run, even if it appears in several artifacts. If the size cannot be read (HTTP error, resource that is not an image), only `width` is written, and the browser keeps the ratio when displaying the image.
+- **Reset Image** — second button, under **Resize Image**: removes the size of the embedded images (`width` and `height` attributes, and `width` / `height` in the `style` attribute), so that they are displayed again at their original size. Artifacts whose images have no size are not modified, and the width field is ignored.
 - **Report** — number of artifacts analyzed and modified, first and last artifact of the selection, and a success / failure indicator. Details of each step are written to the browser console.
 
 ### What is modified
 
-Only artifacts in **Text** format are processed. In their Primary Text, an image is considered embedded when it has the attribute `alt="Embedded Image"` (case-insensitive), for example:
+Only artifacts in **Text** format are processed. In their Primary Text, an image is considered embedded when it has the attribute `alt="Embedded Image"` (case-insensitive), or when its `src` is an image stored in ERM (`/wrappedResources/`). Images from other sites are left unchanged. The size of an image can take several forms:
 
 ```html
 <!-- No size set -->
 <img alt="Embedded Image" id="_1778079980440" src="https://<server>/rm/wrappedResources/WR_...?accept=none&private"/>
 
-<!-- Size set -->
+<!-- Size set by attributes ("width" alone, or "width" and "height") -->
 <img alt="Embedded Image" height="225" id="_1778079980440" src="https://<server>/rm/wrappedResources/WR_...?accept=none&private" width="180"/>
+
+<!-- Size set in the style -->
+<img alt="" id="_4749167364120770" src="https://<server>/rm/wrappedResources/WR_...?accept=none&private" style="width: 161px; height: 103px;"/>
 ```
 
-In both cases, **Resize Image** rewrites `width` and `height`, and **Reset Image** removes them. All other content of the artifact is left unchanged.
+In every case, **Resize Image** writes the size with the `width` and `height` attributes only: `width` and `height` are removed from the `style` attribute, whose other properties are kept, and the `style` attribute is removed if it becomes empty. **Reset Image** removes the size in every form. All other content of the artifact is left unchanged.
 
 An artifact is **skipped** when:
 

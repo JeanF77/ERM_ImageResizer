@@ -71,6 +71,11 @@ const GUI_ITEM_IMAGE_WIDTH = "gui_imagewidth";
 const MIN_IMAGE_SIZE = 20;
 const MAX_IMAGE_SIZE = 1000;
 
+// ---- Embedded image detection
+
+const EMBEDDED_IMAGE_ALT = "embedded image";    // ---- Value of "alt" attribute (case-insensitive)
+const WRAPPED_RESOURCE_PATH = "/wrappedResources/";   // ---- Path of an image stored in ERM ("src" attribute)
+
 // ---- Configuration context
 
 const CONFIG_UNKNOWN = "config_unknown";        // ---- Not read yet
@@ -605,11 +610,57 @@ async function getImageSize(imageUrl, sizeCache) {
 }
 
 /**
+ * Check if an image is embedded in the artifact
+ * - "alt" attribute is "Embedded Image" (case-insensitive), or "src" is an ERM wrapped resource
+ * @param {Element} img - Image element
+ * @returns - "true" if the image is embedded
+ */
+
+function isEmbeddedImage(img) {
+   const myAlt = (img.getAttribute('alt') || '').toLowerCase();
+   const mySrc = img.getAttribute('src') || '';
+
+   return myAlt === EMBEDDED_IMAGE_ALT || mySrc.indexOf(WRAPPED_RESOURCE_PATH) > -1;
+}
+
+/**
+ * Check if an image has a size modifier : "width" or "height" attribute, or in the "style" attribute
+ * @param {Element} img - Image element
+ * @returns - "true" if a size modifier is found
+ */
+
+function hasImageSize(img) {
+   return img.hasAttribute('width') || img.hasAttribute('height') || img.style.width !== '' || img.style.height !== '';
+}
+
+/**
+ * Remove the size modifiers of an image : "width" and "height" attributes, and in the "style" attribute
+ * - Other style properties are kept, the "style" attribute is removed if it becomes empty
+ * @param {Element} img - Image element
+ */
+
+function removeImageSize(img) {
+   img.removeAttribute('width');
+   img.removeAttribute('height');
+
+   if (img.hasAttribute('style')) {
+      img.style.removeProperty('width');
+      img.style.removeProperty('height');
+
+      if (img.style.length === 0) {
+         img.removeAttribute('style');
+      }
+   }
+}
+
+/**
  * Resize (or reset) embedded images in an HTML string
+ * - The size of an image may be set by "width", "width" and "height", or in the "style" attribute :
+ *   in all cases, it is replaced by "width" and "height" attributes only
  * - Resize : width is set to the value entered in the widget, and height is
  *   computed from the image natural size to preserve proportionality
  *   (if the natural size cannot be read, height is removed : browser keeps the ratio)
- * - Reset (imageWidth = null) : width and height are removed, image is displayed at its original size
+ * - Reset (imageWidth = null) : size modifiers are removed, image is displayed at its original size
  * @param {String} htmlString - HTML string to process
  * @param {Number} imageWidth - Target image width in pixels, "null" to reset images to their original size
  * @param {Map} sizeCache - Image natural size cache (key = image URL)
@@ -630,9 +681,8 @@ async function resizeEmbeddedImages(htmlString, imageWidth, sizeCache) {
       Array.from(el.classList).some(cls => cls.toLowerCase() === 'com-ibm-rdm-editor-embeddedresourcedecorator')
    );
 
-   // ---- On récupère toutes les images ayant un alt, puis on filtre en JS
-   const embeddedImages = Array.from(body.querySelectorAll('img[alt]'))
-      .filter(img => typeof img.alt === 'string' && img.alt.toLowerCase() === 'embedded image');
+   // ---- On récupère toutes les images, puis on garde les images incluses
+   const embeddedImages = Array.from(body.querySelectorAll('img')).filter(isEmbeddedImage);
 
    if (hasEmbeddedDecorator || embeddedImages.length === 0) {
       if (hasEmbeddedDecorator) {
@@ -643,29 +693,28 @@ async function resizeEmbeddedImages(htmlString, imageWidth, sizeCache) {
    } else if (imageWidth === null) {
       // ---- Reset : only images with a size modifier must be changed
 
-      const sizedImages = embeddedImages.filter(img => img.hasAttribute('width') || img.hasAttribute('height'));
+      const sizedImages = embeddedImages.filter(hasImageSize);
 
       if (sizedImages.length === 0) {
          return null;
       }
 
-      sizedImages.forEach(img => {
-         img.removeAttribute('width');
-         img.removeAttribute('height');
-      });
+      sizedImages.forEach(removeImageSize);
 
       return body.innerHTML;
    } else {
       for (const img of embeddedImages) {
          const mySize = await getImageSize(img.getAttribute('src'), sizeCache);
 
+         // ---- Previous size (attributes or style) is replaced by "width" and "height" attributes
+
+         removeImageSize(img);
+
          img.setAttribute('width', imageWidth);
 
          if (mySize !== null) {
             // ---- Keep proportionality : height = width * (natural height / natural width)
             img.setAttribute('height', Math.max(1, Math.round(imageWidth * mySize.height / mySize.width)));
-         } else {
-            img.removeAttribute('height');
          }
       }
 
